@@ -30,20 +30,25 @@ contract Comments {
 
 
 
-    function tipComment(uint _id) external payable{
+    function tipComment(uint _id) public payable{
         require(msg.sender != address(0), "Sender can't be address 0");
         require(msg.value >= 0.1 ether, "To small amount of ether");
-        require(_id >= 0 && _id < commentCount);
+
+        
+        Comment storage _comment = comments[_id];
 
         address payable _author = comments[_id].author;
 
         _author.transfer(msg.value);
 
-        comments[_id].tips += msg.value ;
+        _comment.tips += 1;
+
+        comments[_id] = _comment;
 
         emit commentTipped(_id, msg.value);
 
     }
+
 
     function addComment(string memory _content) public {
         comments[commentCount] = Comment(commentCount, 0, _content, payable(msg.sender));
