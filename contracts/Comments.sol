@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
-
+pragma experimental ABIEncoderV2;
 contract Comments {
 
     event commentAdded(
@@ -55,5 +55,12 @@ contract Comments {
         emit commentAdded(msg.sender, _content, 0, block.timestamp);
         commentCount++;
     }
-
+    
+    function getCommentCount() public view returns(uint){
+        return commentCount;
+    }
+    
+    function getCommentById(uint _id) public view returns(Comment memory) {
+        return comments[_id];
+    }
 }
