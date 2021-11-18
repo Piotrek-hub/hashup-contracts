@@ -44,13 +44,15 @@ contract Comments {
         comments[_id] = _comment;
 
         emit commentTipped(_id, _amount);
-
+        
     }
 
 
-    function addComment(string memory _content) public {
-        comments[commentCount] = Comment(commentCount, 0, _content, payable(msg.sender));
+    function addComment(string memory _content, uint _value) public {
+        comments[commentCount] = Comment(commentCount, _value, _content, payable(msg.sender));
+        tippers[commentCount][msg.sender] = true;
         emit commentAdded(msg.sender, _content, 0, block.timestamp);
+        emit commentTipped(comments[commentCount].id, _value);
         commentCount++;
     }
     
