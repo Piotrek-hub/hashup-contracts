@@ -27,25 +27,23 @@ contract Comments {
 
 
     mapping(uint => Comment) public comments;
+    mapping(uint => mapping(address => bool)) public tippers; // Comment.id => (tipper => bool)
 
 
-
-    function tipComment(uint _id) public payable{
+    function tipComment(uint _id, uint _amount) public payable{
         require(msg.sender != address(0), "Sender can't be address 0");
-        require(msg.value >= 0.1 ether, "To small amount of ether");
-
+        require(tippers[_id][msg.sender] == false, "User already tipped");
         
         Comment storage _comment = comments[_id];
-
-        address payable _author = comments[_id].author;
-
-        _author.transfer(msg.value);
-
-        _comment.tips += 1;
-
+        
+        _comment.tips += _amount;
+        
+        // User tipped (can only once)
+        tippers[_id][msg.sender] = true;
+        
         comments[_id] = _comment;
 
-        emit commentTipped(_id, msg.value);
+        emit commentTipped(_id, _amount);
 
     }
 
@@ -63,4 +61,6 @@ contract Comments {
     function getCommentById(uint _id) public view returns(Comment memory) {
         return comments[_id];
     }
+    
+    
 }
