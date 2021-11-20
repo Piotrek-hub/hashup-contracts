@@ -22,13 +22,20 @@ contract Comments {
         address payable author;
     }
 
-
+    
     uint public commentCount = 0;
-
-
+    address[] public addressesTipped;
+    
     mapping(uint => Comment) public comments;
     mapping(uint => mapping(address => bool)) public tippers; // Comment.id => (tipper => bool)
 
+
+    // function getTippers() public view returns (address[] memory){
+    //     address[] memory result;
+    //     for(uint i = 0; i < commentCount; i++){
+    //         if(tippers[i][])
+    //     }
+    // }
 
     function tipComment(uint _id, uint _amount) public payable{
         require(msg.sender != address(0), "Sender can't be address 0");
@@ -49,10 +56,11 @@ contract Comments {
 
 
     function addComment(string memory _content, uint _value) public {
-        comments[commentCount] = Comment(commentCount, _value, _content, payable(msg.sender));
-        tippers[commentCount][msg.sender] = true;
+        comments[commentCount] = Comment(commentCount, 0, _content, payable(msg.sender));
+        // Event dodania komentarza 
         emit commentAdded(msg.sender, _content, 0, block.timestamp);
-        emit commentTipped(comments[commentCount].id, _value);
+        // Tipowanie komentarza
+        tipComment(commentCount, _value);
         commentCount++;
     }
     
