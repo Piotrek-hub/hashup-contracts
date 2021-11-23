@@ -80,7 +80,7 @@ contract Comments {
         tipsSum += _amount;
         
         
-        // User tipped (can only once)
+        
         tippers[_id][msg.sender] = true;
         addressToTips[_id][msg.sender] += _amount;
         
