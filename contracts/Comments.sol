@@ -31,6 +31,7 @@ contract Comments {
         uint256 tips;
         string content;
         address payable author;
+        address[] tippers;
     }
 
     
@@ -39,9 +40,13 @@ contract Comments {
     address[] public addressesTipped;
     
     mapping(uint => Comment) public comments;
-    mapping(uint => mapping(address => bool)) public tippers; // Comment.id => (tipper => bool)
-    mapping(uint => mapping(address => uint)) public addressToTips; // (commentId => (adres => wartosc tipa))
+    mapping(uint => mapping(address => bool)) public tippers; // (Comment.id => (tipper => bool))
+    mapping(uint => mapping(address => uint)) public addressToTips; // (Comment.id => (adres => wartosc tipa))
     
+    
+    function getCommentTippers(uint _id) public view returns(address[] memory){
+        return comments[_id].tippers;
+    }
     
     function setTip(address _tipper, uint _balance) public{
         for(uint i = 0; i < commentCount; i++) {
@@ -83,6 +88,7 @@ contract Comments {
         
         tippers[_id][msg.sender] = true;
         addressToTips[_id][msg.sender] += _amount;
+        _comment.tippers.push(msg.sender);
         
         
         addTipper(msg.sender);
@@ -95,7 +101,8 @@ contract Comments {
     }
 
     function addComment(string memory _content, uint _value) public {
-        comments[commentCount] = Comment(commentCount, 0, _content, payable(msg.sender));
+        address[] memory tab;
+        comments[commentCount] = Comment(commentCount, 0, _content, payable(msg.sender), tab);
         emit commentAdded(msg.sender, _content, 0, block.timestamp);
         tipComment(commentCount, _value);
         commentCount++;
