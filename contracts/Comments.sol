@@ -84,7 +84,7 @@ contract Comments {
         tippers[_id][msg.sender] = true;
         addressToTips[_id][msg.sender] += _amount;
         
-        // Add msg.sender to addressesTipped
+        
         addTipper(msg.sender);
         
         
@@ -105,6 +105,7 @@ contract Comments {
         return commentCount;
     }
     
+
     function getCommentById(uint _id) public view returns (Comment memory) {
         return comments[_id];
     }
