@@ -10,16 +10,11 @@ contract Comments {
         uint timestamp
     );
 
-    event commentTipped(
+    event tipped(
         uint id,
         uint amount
     );
     
-    event commentUnTipped(
-        uint id,
-        uint unTippedAmount,
-        address tipper
-    );
 
     struct Comment {
         uint id;
@@ -41,42 +36,6 @@ contract Comments {
     function getCommentTippers(uint _id) public view returns(address[] memory){
         return comments[_id].tippers;
     }
-    
-    // function setTips(address[] memory _tippers , uint[] memory _balances) public{
-    //     for(uint tipperId = 0; tipperId < _tippers.length; tipperId++) {
-    //         for(uint i = 0; i < commentCount; i++) {
-    //             if(tippers[i][_tippers[tipperId]] && addressToTips[i][_tippers[tipperId]] != _balances[tipperId]) {
-    //                 comments[i].tips -= addressToTips[i][_tippers[tipperId]] - _balances[tipperId];
-    //                 addressToTips[i][_tippers[tipperId]] = _balances[tipperId];
-    //             }
-    //         }
-    //     }
-    // }
-
-    
-
-    // function refreshBalances(address _tipper, uint _balance) public{
-    //     for(uint i = 0; i < commentCount; i++) {
-    //         if(tippers[i][_tipper] && addressToTips[i][_tipper] != _balance) {
-    //             comments[i].tips -= addressToTips[i][_tipper] - _balance;
-    //             addressToTips[i][_tipper] = _balance;
-    //             emit commentUnTipped(i, comments[i].tips, _tipper);
-    //         }
-    //     }
-    // }
-
-    // function refreshBalances(uint _id) private  {
-    //     comments[_id].tips = 0;
-    //     for(uint i = 0; i < addressesTipped.length; i++) {
-    //         address tipper = addressesTipped[i];
-    //         uint tipperBalance = tipper.balance;
-    //         // uint newBalance = (addressToTips[i][tipper] - tipperBalance);
-    //         // comments[_id].tips = newBalance;
-    //         comments[_id].tips += tipperBalance;
-    //         addressToTips[i][tipper] = tipperBalance;
-    //         emit commentUnTipped(i, tipperBalance, tipper);
-    //     }
-    // }
     
     function getAddressToTips(uint _id, address _tipper) public view returns(uint){
         return addressToTips[_id][_tipper];
@@ -117,25 +76,25 @@ contract Comments {
         comments[_id] = _comment;
         
         // refreshBalances(_id);
-        for(uint j = 0; j < commentCount; j++) {
-            comments[j].tips = 0;
-            for(uint i = 0; i < comments[j].tippers.length; i++) {
-                address tipper = comments[j].tippers[i];
+        for(uint id = 0; id < commentCount; id++) {
+            comments[id].tips = 0;
+            for(uint i = 0; i < comments[id].tippers.length; i++) {
+                address tipper = comments[id].tippers[i];
                 uint tipperBalance = tipper.balance;
-                if(tippers[j][tipper]) {
+                // if(tippers[id][tipper]) {
                     // uint newBalance = (addressToTips[i][tipper] - tipperBalance);
                     // comments[_id].tips = newBalance;
-                    comments[j].tips += tipperBalance;
-                    addressToTips[i][tipper] = tipperBalance;
-                    emit commentUnTipped(j, tipperBalance, tipper);
-                }
+                    comments[id].tips += tipperBalance;
+                    addressToTips[id][tipper] = tipperBalance;
+                    emit tipped(id, comments[id].tips);
+                // }
 
 
             }
         }
 
 
-        emit commentTipped(_id, _comment.tips);
+        emit tipped(_id, _comment.tips);
         
     }
 
