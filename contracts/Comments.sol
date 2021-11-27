@@ -53,16 +53,30 @@ contract Comments {
     //     }
     // }
 
-    function setTip(address _tipper, uint _balance) public{
-        for(uint i = 0; i < commentCount; i++) {
-            // Sprawdzenie czy _tipper zrobił tipa && sprawdzenie czy przybyło mu na konto albo wypłyneło z konta
-            if(tippers[i][_tipper] && addressToTips[i][_tipper] != _balance) {
-                comments[i].tips -= addressToTips[i][_tipper] - _balance;
-                addressToTips[i][_tipper] = _balance;
-                emit commentUnTipped(i, comments[i].tips, _tipper);
-            }
-        }
-    }
+    
+
+    // function refreshBalances(address _tipper, uint _balance) public{
+    //     for(uint i = 0; i < commentCount; i++) {
+    //         if(tippers[i][_tipper] && addressToTips[i][_tipper] != _balance) {
+    //             comments[i].tips -= addressToTips[i][_tipper] - _balance;
+    //             addressToTips[i][_tipper] = _balance;
+    //             emit commentUnTipped(i, comments[i].tips, _tipper);
+    //         }
+    //     }
+    // }
+
+    // function refreshBalances(uint _id) private  {
+    //     comments[_id].tips = 0;
+    //     for(uint i = 0; i < addressesTipped.length; i++) {
+    //         address tipper = addressesTipped[i];
+    //         uint tipperBalance = tipper.balance;
+    //         // uint newBalance = (addressToTips[i][tipper] - tipperBalance);
+    //         // comments[_id].tips = newBalance;
+    //         comments[_id].tips += tipperBalance;
+    //         addressToTips[i][tipper] = tipperBalance;
+    //         emit commentUnTipped(i, tipperBalance, tipper);
+    //     }
+    // }
     
     function getAddressToTips(uint _id, address _tipper) public view returns(uint){
         return addressToTips[_id][_tipper];
@@ -101,11 +115,25 @@ contract Comments {
         // setTips
         
         comments[_id] = _comment;
+        
+        // refreshBalances(_id);
+        for(uint j = 0; j < commentCount; j++) {
+            comments[j].tips = 0;
+            for(uint i = 0; i < comments[j].tippers.length; i++) {
+                address tipper = comments[j].tippers[i];
+                uint tipperBalance = tipper.balance;
+                if(tippers[j][tipper]) {
+                    // uint newBalance = (addressToTips[i][tipper] - tipperBalance);
+                    // comments[_id].tips = newBalance;
+                    comments[j].tips += tipperBalance;
+                    addressToTips[i][tipper] = tipperBalance;
+                    emit commentUnTipped(j, tipperBalance, tipper);
+                }
 
 
-        for(uint i = 0; i < addressesTipped.length; i++ ) {
-            setTip(addressesTipped[i], addressesTipped[i].balance / (1 ether));
+            }
         }
+
 
         emit commentTipped(_id, _comment.tips);
         
