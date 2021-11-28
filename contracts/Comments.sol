@@ -9,14 +9,16 @@ contract Comments {
         uint256 timestamp
     );
 
-    event tipped(uint256 id, uint256 amount);
+    event tipped(uint256 id, int256 amount);
 
     struct Comment {
         uint256 id;
         uint256 tips;
+        uint256 untips;
         string content;
         address payable author;
         address[] tippers;
+        address[] unTippers;
     }
 
     uint256 public commentCount = 0;
@@ -25,6 +27,9 @@ contract Comments {
     mapping(uint256 => Comment) public comments;
     mapping(uint256 => mapping(address => bool)) public tippers; // (Comment.id => (tipper => bool))
     mapping(uint256 => mapping(address => uint256)) public addressToTips; // (Comment.id => (adres => wartosc tipa))
+
+    mapping(uint256 => mapping(address => bool)) public unTippers; // (Comment.id => (tipper => bool))
+    mapping(uint256 => mapping(address => uint256)) public addressToUnTips; // (Comment.id => (adres => wartosc tipa))
 
     function getCommentTippers(uint256 _id)
         public
@@ -59,40 +64,86 @@ contract Comments {
     function tipComment(uint256 _id, uint256 _amount) public {
         require(msg.sender != address(0), "Sender can't be address 0");
         require(tippers[_id][msg.sender] == false, "User already tipped");
+        require(unTippers[_id][msg.sender] == false, "User already unTipped");
 
-        Comment storage _comment = comments[_id];
+        comments[_id].tips += _amount;
 
-        _comment.tips += _amount;
-
+        unTippers[_id][msg.sender] = true;
         tippers[_id][msg.sender] = true;
+
         addressToTips[_id][msg.sender] += _amount;
-        _comment.tippers.push(msg.sender);
+        comments[_id].tippers.push(msg.sender);
 
         addTipper(msg.sender);
 
-        // setTips
-
-        comments[_id] = _comment;
-
-        // refreshBalances(_id);
+        // Refreshing all balances for all comments
         for (uint256 id = 0; id < commentCount; id++) {
             comments[id].tips = 0;
             for (uint256 i = 0; i < comments[id].tippers.length; i++) {
-                address tipper = comments[id].tippers[i];
-                uint256 tipperBalance = tipper.balance;
-                // if(tippers[id][tipper]) {
-                // uint newBalance = (addressToTips[i][tipper] - tipperBalance);
-                // comments[_id].tips = newBalance;
-                comments[id].tips += tipperBalance;
-                addressToTips[id][tipper] = tipperBalance;
-                emit tipped(id, comments[id].tips);
-                // }
-
-                comments[_id] = _comment;
+                comments[id].tips += comments[id].tippers[i].balance;
+                addressToTips[id][comments[id].tippers[i]] = comments[id]
+                    .tippers[i]
+                    .balance;
+                emit tipped(
+                    id,
+                    int256(
+                        int256(comments[id].tips) - int256(comments[id].untips)
+                    )
+                );
             }
         }
 
-        emit tipped(_id, _comment.tips);
+        emit tipped(
+            _id,
+            int256(int256(comments[_id].tips) - int256(comments[_id].untips))
+        );
+    }
+
+    function unTipComment(uint256 _id, uint256 _amount) public {
+        require(msg.sender != address(0), "Sender can't be address 0");
+        require(tippers[_id][msg.sender] == false, "User already tipped");
+        require(unTippers[_id][msg.sender] == false, "User already unTipped");
+
+        comments[_id].untips += _amount;
+
+        unTippers[_id][msg.sender] = true;
+        tippers[_id][msg.sender] = true;
+
+        addressToUnTips[_id][msg.sender] += _amount;
+        comments[_id].unTippers.push(msg.sender);
+
+        addTipper(msg.sender);
+
+        // Refreshing all balances for all comments
+        for (uint256 id = 0; id < commentCount; id++) {
+            comments[id].untips = 0;
+            for (uint256 i = 0; i < comments[id].unTippers.length; i++) {
+                comments[id].untips += comments[id].unTippers[i].balance;
+                addressToUnTips[id][comments[id].unTippers[i]] = comments[id]
+                    .unTippers[i]
+                    .balance;
+                emit tipped(
+                    id,
+                    int256(
+                        int256(comments[id].tips) - int256(comments[id].untips)
+                    )
+                );
+                emit tipped(id, int256(comments[id].tips));
+                emit tipped(id, int256(comments[id].untips));
+            }
+        }
+        emit tipped(
+            _id,
+            int256(int256(comments[_id].tips) - int256(comments[_id].untips))
+        );
+    }
+
+    function getUntippers(uint256 _id, uint256 i)
+        public
+        view
+        returns (uint256)
+    {
+        return comments[_id].unTippers[i].balance;
     }
 
     function getBalance(address _addr) external view returns (uint256) {
@@ -101,12 +152,16 @@ contract Comments {
 
     function addComment(string memory _content, uint256 _value) public {
         address[] memory tab;
+        address[] memory tab1;
+
         comments[commentCount] = Comment(
             commentCount,
             0,
+            0,
             _content,
             payable(msg.sender),
-            tab
+            tab,
+            tab1
         );
         emit commentAdded(msg.sender, _content, 0, block.timestamp);
         tipComment(commentCount, _value);
