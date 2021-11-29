@@ -31,26 +31,10 @@ contract Comments {
     mapping(uint256 => mapping(address => bool)) public unTippers; // (Comment.id => (tipper => bool))
     mapping(uint256 => mapping(address => uint)) public addressToUnTips; // (Comment.id => (adres => wartosc tipa))
 
-    function getCommentTippers(uint256 _id)
-        public
-        view
-        returns (address[] memory)
-    {
-        return comments[_id].tippers;
-    }
-
-    function getAddressToTips(uint256 _id, address _tipper)
-        public
-        view
-        returns (uint256)
-    {
-        return addressToTips[_id][_tipper];
-    }
-
-    function getTippers() public view returns (address[] memory) {
-        return addressesTipped;
-    }
-
+    /*
+     * @param {address} _tipper - New tipper address
+     * Returns true if the address does not belong to the and array has been added, else false
+     */
     function addTipper(address _tipper) private returns (bool) {
         for (uint256 i = 0; i < addressesTipped.length; i++) {
             if (_tipper == addressesTipped[i]) {
@@ -61,6 +45,11 @@ contract Comments {
         return true;
     }
 
+    /*
+     * @param {uint} _id - Comment id 
+     * @param {uint} _amount - Value of tip 
+     * emits event tipped
+     */
     function tipComment(uint _id, uint256 _amount) public {
         require(msg.sender != address(0), "Sender can't be address 0");
         require(tippers[_id][msg.sender] == false, "User already tipped");
@@ -76,7 +65,6 @@ contract Comments {
 
         addTipper(msg.sender);
 
-        // Refreshing all balances for all comments 
         for (uint256 id = 0; id < commentCount; id++) {
             comments[id].tips = 0;
             for (uint256 i = 0; i < comments[id].tippers.length; i++) {
@@ -89,6 +77,11 @@ contract Comments {
         emit tipped(_id, int(int(comments[_id].tips) - int(comments[_id].untips)));
     }
 
+    /*
+     * @param {uint} _id - Comment id 
+     * @param {uint} _amount - Value of tip 
+     * emits event tipped
+     */
     function unTipComment(uint _id, uint _amount) public {
         require(msg.sender != address(0), "Sender can't be address 0");
         require(tippers[_id][msg.sender] == false, "User already tipped");
@@ -105,29 +98,27 @@ contract Comments {
         addTipper(msg.sender);
 
 
-        // Refreshing all balances for all comments 
         for (uint256 id = 0; id < commentCount; id++) {
             comments[id].untips = 0;
             for (uint256 i = 0; i < comments[id].unTippers.length; i++) {
                 comments[id].untips += comments[id].unTippers[i].balance;
                 addressToUnTips[id][comments[id].unTippers[i]] = comments[id].unTippers[i].balance;
                 emit tipped(id, int(int(comments[id].tips) - int(comments[id].untips)));
-                emit tipped(id, int(comments[id].tips));
-                emit tipped(id, int(comments[id].untips));
             }
         }
         emit tipped(_id, int(int(comments[_id].tips) - int(comments[_id].untips)));
     }
+    
 
-    function getUntippers(uint _id, uint i) public view  returns(uint) {
-        return comments[_id].unTippers[i].balance;
-    }
-21:38 28.11.2021
-    function getBalance(address _addr) external view returns (uint256) {
-        return _addr.balance / (1 ether);
-    }
-
-    function addComment(string memory _content, uint256 _value) public {
+    /*
+     * @param {string} _content - Comment content 
+     * @param {uint} _value - Comment initial tips value
+     * emits event commentAdded
+     */
+    function addComment(
+        string memory _content, 
+        uint256 _value
+    ) public {
         address[] memory tab;
         address[] memory tab1;
 
@@ -145,13 +136,4 @@ contract Comments {
         commentCount++;
     }
 
-    function getCommentCount() public view returns (uint256) {
-        return commentCount;
-    }
-
-    function getCommentById(uint256 _id) public view returns (Comment memory) {
-        return comments[_id];
-    }
-
-    function pay() public payable {}
 }
